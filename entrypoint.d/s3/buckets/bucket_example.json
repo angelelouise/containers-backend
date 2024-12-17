@@ -1,0 +1,6 @@
+{
+    "Bucket": "my-bucket-localstack",
+    "CreateBucketConfiguration": {
+      "LocationConstraint": "sa-east-1"
+    }
+}

@@ -1,0 +1,26 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack_main
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_DOCKER_NETWORK=localstack_default
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "localstack_volume:/var/lib/localstack"
+      - "./entrypoint.d:/etc/localstack/init/ready.d"
+    networks:
+      - localstack_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  localstack_network:
+    driver: bridge
+
+volumes:
+  localstack_volume:
+    driver: local
