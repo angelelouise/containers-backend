@@ -1,4 +1,5 @@
 services:
+  #AWS
   localstack:
     image: localstack/localstack:latest
     container_name: localstack_main
@@ -16,6 +17,66 @@ services:
       - localstack_network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # Zookeeper
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    networks:
+      - localstack_network
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    networks:
+      - localstack_network
+
+  # Schema Registry
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    container_name: schema_registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=PLAINTEXT://kafka:9092
+    networks:
+      - localstack_network
+
+  # Schema Registration Init
+  schema-init:
+    image: curlimages/curl:latest
+    container_name: schema_init
+    user: root
+    depends_on:
+      - schema-registry
+    volumes:
+      - "./schema-init:/schema-init"
+    command: >
+      sh -c "apk add --no-cache jq &&
+         ls -l /schema-init &&
+         chmod +x /schema-init/register-schema.sh &&
+         /bin/sh /schema-init/register-schema.sh"
+    networks:
+      - localstack_network    
 
 networks:
   localstack_network:
