@@ -67,6 +67,7 @@ services:
     container_name: schema_init
     user: root
     depends_on:
+      - kafka
       - schema-registry
     volumes:
       - "./schema-init:/schema-init"

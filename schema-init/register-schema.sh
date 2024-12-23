@@ -1,5 +1,24 @@
 #!/bin/bash
 
+echo "Waiting for Kafka to be ready..."
+
+# Wait for Kafka to be ready
+until nc -z kafka 9092; do
+  echo "Kafka not ready yet. Retrying..."
+  sleep 5
+done
+
+echo "Creating Kafka topic..."
+
+# Create Kafka topic
+kafka-topics --create \
+  --bootstrap-server kafka:9092 \
+  --replication-factor 1 \
+  --partitions 1 \
+  --topic my-topic
+
+echo "Kafka topic 'my-topic' created successfully."
+
 echo "Waiting for Schema Registry to be ready..."
 
 # Wait until Schema Registry is available
